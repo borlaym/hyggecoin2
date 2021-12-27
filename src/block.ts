@@ -1,6 +1,7 @@
 import { Transaction } from "./transaction"
+import { hash } from "./utils/hash";
 
-export type UnsignedBlockHeader = {
+export type TruncatedBlockHeader = {
   /**
    * This is the Keccak-256 hash of the parent block's header.
    */
@@ -36,17 +37,65 @@ export type UnsignedBlockHeader = {
   timestamp: number;
 }
 
-
 export type Block = {
-  blockHeader: UnsignedBlockHeader & {
+  blockHeader: TruncatedBlockHeader & {
     /**
      * This is an 8-byte hash that verifies a sufficient amount of computation has been done on this block.
      */
     nonce: number;
-    /**
-     *  This is a 32-byte hash that verifies a sufficient amount of computation has been done on this block.
-     */
-    hash: string;
   };
   transactionSeries: Transaction[]
+}
+
+const HASH_LENGTH = 64;
+const MAX_HASH_VALUE = parseInt('f'.repeat(HASH_LENGTH), 16);
+
+/**
+ * Calculate a base 16 hash that is always 64 characters long
+ */
+export function calculateBlockTargetHash(lastBlock: Block): string {
+  const value =  (MAX_HASH_VALUE / lastBlock.blockHeader.difficulty).toString(16);
+
+  if (value.length > HASH_LENGTH) {
+    return 'f'.repeat(HASH_LENGTH);
+  }
+
+  return '0'.repeat(HASH_LENGTH - value.length) + value;
+}
+
+const MAX_NONCE_VALUE = 2 ** 64;
+
+export function mineBlock({
+  lastBlock,
+  beneficiary
+}: {
+  lastBlock: Block;
+  beneficiary: string;
+}): Block {
+  const target = calculateBlockTargetHash(lastBlock);
+  let blockHash;
+  let nonce;
+  let headers: TruncatedBlockHeader;
+  do {
+    const timestamp = Date.now();
+    headers = {
+      parentHash: hash(lastBlock.blockHeader),
+      beneficiary,
+      difficulty: lastBlock.blockHeader.difficulty + 1,
+      number: lastBlock.blockHeader.number + 1,
+      timestamp,
+      stateRoot: '',
+      transactionRoot: ''
+    };
+    const headerHash = hash(headers);
+    nonce = Math.floor(Math.random() * MAX_NONCE_VALUE);
+    blockHash = hash(headerHash + nonce);
+  } while ( blockHash > target);
+  return {
+    blockHeader: {
+      ...headers,
+      nonce
+    },
+    transactionSeries: []
+  }
 }
