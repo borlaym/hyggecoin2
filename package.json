@@ -8,6 +8,7 @@
     "build-ts": "tsc",
     "start": "npm run serve",
     "serve": "tsc && node -r dotenv/config dist/server.js",
+    "peer": "tsc && node -r dotenv/config dist/server.js --peer",
     "watch-node": "nodemon dist/server.js",
     "watch-ts": "tsc -w",
     "test": "jest --watch",
