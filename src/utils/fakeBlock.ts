@@ -1,9 +1,9 @@
-import { Block, TruncatedBlockHeader } from "../block";
+import { Block, TruncatedBlockHeaders } from "../block";
 
 /**
  * Helper function to create a type correct blockheader from partial values, used in testing
  */
-export function fakeBlockHeaders(blockHeaders: Partial<TruncatedBlockHeader>): TruncatedBlockHeader {
+export function fakeBlockHeaders(blockHeaders: Partial<TruncatedBlockHeaders>): TruncatedBlockHeaders {
   return {
     parentHash: '',
     beneficiary: '',
@@ -19,9 +19,9 @@ export function fakeBlockHeaders(blockHeaders: Partial<TruncatedBlockHeader>): T
 /**
  * Helper function to create a type correct block from partial values, used in testing
  */
- export function fakeBlock(blockHeaders: Partial<TruncatedBlockHeader>): Block {
+ export function fakeBlock(blockHeaders: Partial<TruncatedBlockHeaders>): Block {
   return {
-    blockHeader: {
+    blockHeaders: {
       ...fakeBlockHeaders(blockHeaders),
       nonce: 1
     },
