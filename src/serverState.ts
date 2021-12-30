@@ -1,20 +1,15 @@
 import fs from 'fs';
-import defaultConfig from '../config.sample.json';
-import { MINUTE } from './config';
+import localConfig from '../config.json';
+import { PORT, PORT_HEADER_NAME, SECOND } from './config';
+import fetch from 'node-fetch';
 
-let config: {
+const config: {
   knownPeers: string[];
   updateKnownPeers: boolean;
   fetchPeers: boolean;
-};
-let validLocalConfig = false;
-try {
-  config = JSON.parse(fs.readFileSync('../config.json', 'utf-8'));
-  validLocalConfig = true;
-} catch (err) {
-  console.error(err);
-  config = defaultConfig
-}
+} = localConfig as any;
+
+console.log(config);
 
 type ServerState = {
   peers: string[]
@@ -44,11 +39,15 @@ const serverState: ServerState = {
 };
 
 export function addPeer(peer: string) {
-  serverState.peers = [...serverState.peers, peer];
-  savePeers(serverState.peers);
+  if (!serverState.peers.includes(peer)) {
+    console.log(`Adding ${peer} to peer list`)
+    serverState.peers = [...serverState.peers, peer];
+    savePeers(serverState.peers);
+  }
 }
 
 export function removePeer(peer: string) {
+  console.log(`Removing ${peer} from peer list`)
   serverState.peers = serverState.peers.filter(p => p !== peer);
   savePeers(serverState.peers);
 }
@@ -58,12 +57,21 @@ if (config.fetchPeers) {
   setInterval(() => {
     console.log('Fetching peer infromation')
     serverState.peers.forEach((peer) => {
-      fetch(`${peer}/peers`)
+      fetch(`${peer}/peers`, {
+        headers: {
+          [PORT_HEADER_NAME] : String(PORT)
+        }
+      })
         .then(r => r.json())
-        .then((remotePeers: string[]) => remotePeers.filter(p => !serverState.peers.includes(p)).forEach(peer => addPeer(peer)))
+        .then((remotePeers: string[]) => {
+          remotePeers.filter(p => !serverState.peers.includes(p)).forEach(peer => addPeer(peer))
+        })
+        .catch(err => {
+          removePeer(peer);
+        })
 
     })
-  }, 10 * MINUTE);
+  }, 5 * SECOND);
 }
 
 

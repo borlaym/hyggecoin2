@@ -1,6 +1,7 @@
 import express, { ErrorRequestHandler } from 'express';
 import bodyParser from 'body-parser';
-import serverState from './serverState';
+import serverState, { addPeer } from './serverState';
+import { PORT, PORT_HEADER_NAME } from './config';
 
 const app = express();
 
@@ -17,6 +18,8 @@ app.use('*', (req, res, next) => {
 })
 
 app.get('/peers', (req, res, next) => {
+  const port = req.headers[PORT_HEADER_NAME];
+  addPeer(`http://[${req.ip}]:${port}`);
   res.json(serverState.peers);
 })
 
@@ -31,6 +34,5 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
 app.use('*', errorHandler)
 
-const port = process.env.PORT || (process.argv.includes('--peer') ? Math.floor(Math.random() * 500 + 8000) : 9000);
 
-app.listen(port, () => console.log(`Listening on port ${port}`));
+app.listen(PORT, () => console.log(`Listening on port ${PORT}`));

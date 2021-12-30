@@ -1,5 +1,8 @@
 import { TruncatedBlockHeaders } from "./block";
 
+export const PORT = process.env.PORT || (process.argv.includes('--peer') ? Math.floor(Math.random() * 500 + 8000) : 9000);
+export const PORT_HEADER_NAME = 'x-hyggecoin-port';
+
 export const SECOND = 1000;
 export const MINUTE = 60 * SECOND
 
